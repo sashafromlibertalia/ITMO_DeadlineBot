@@ -1,4 +1,4 @@
-const TOKEN = 'MY_TOKEN'
+const TOKEN = '1231768718:AAGvxd5DKdOiEBXyvfcIYxaKKrteCySUGPs'
 const { Telegraf } = require('telegraf')
 
 const bot = new Telegraf(TOKEN)
@@ -173,5 +173,21 @@ _/remove 3_
 [Репозиторий](github.com/sashafromlibertalia/ITMO_DeadlineBot) `, { parse_mode: 'Markdown' })
 })
 
+bot.hears(/тоха (.+)/, ({ reply }) => {
+  const answers = [
+    'Пахую ваще на все',
+    'Заебись, узнал номер своей группы',
+    'Настроение скверное, настроение пойти в сабвей',
+    'Нам всем пизда девочки',
+    'Ты заебал уже со своими вопросами',
+    'Ты заебала уже со своими вопросами',
+    'МНЕ ТАК КАЙФОВО ВЫ БЫ ЗНАЛИ РЕБЯТА!!!!',
+    'А где я? Это СПбГУ?',
+    'И тебе говна поесть желаю)',
+    'Курю траву и гоняю шары - карьера явно не на взлете',
+    'Это новый кадилак!!!!!'
+  ]
+  reply(`${answers[Math.floor(Math.random() * answers.length)]}`)
+})
 
 bot.launch()
