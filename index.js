@@ -6,89 +6,87 @@ const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')
 const adapter = new FileSync('db.json')
 const db = low(adapter)
-let id = 0;
-let TeacherPUSH = ""
-let subPUSH = ""
+let id = 0
+let TeacherPUSH = ''
+let subPUSH = ''
 const group = 'M3106'
 
-db.defaults({info: []})
+db.defaults({ info: [] })
   .write()
 
 bot.start((ctx) => {
-    ctx.reply( `
+  ctx.reply(`
 _/list_ - отсылает все дедлайны с датами
 _/add_ - добавляет новый дедлайн 
 _/remove_ - удаляет ошибочный дедлайн 
 _/sos_ - отправляет шпаргалку по преподам, их системам сдачи лаб, все конспекты и тд 
 _/help_ - получи помощь по использованию бота
-  `, {parse_mode: "Markdown"});
-  });
+  `, { parse_mode: 'Markdown' })
+})
 
 bot.command('list', (ctx) => {
-    const arrayLength = db.get('info').value().length
-    let text = []
-    for (let i = 0; i < arrayLength; i++) {
-        db.get(`info[${i}]`).assign({count: i+1}).write()
-        text[i] = `
+  const arrayLength = db.get('info').value().length
+  const text = []
+  for (let i = 0; i < arrayLength; i++) {
+    db.get(`info[${i}]`).assign({ count: i + 1 }).write()
+    text[i] = `
 ${db.get('info').sortBy('count').value()[i].count}. *${db.get('info').sortBy('count').value()[i].type}*
 👨🏻‍🏫 _Учитель_ -  *${db.get('info').sortBy('count').value()[i].teacher}*
 🗓 _Дата сдачи_ - *${db.get('info').sortBy('count').value()[i].date}*`
-}
-    if (arrayLength == 0) {
-        ctx.reply("🎰 *Дедлайнов нет!* 🎰",{parse_mode: "Markdown"})
-    } else {
-        ctx.reply(`
+  }
+  if (arrayLength === 0) {
+    ctx.reply('🎰 *Дедлайнов нет!* 🎰', { parse_mode: 'Markdown' })
+  } else {
+    ctx.reply(`
 📍 *Дедлайны для ${group}* 📍
 ${text.join('\n ')}
   
 _Если ты знаешь еще какие-то дедлайны, то добавь их в бота по команде /add, все будут благодарны_
-  `, {parse_mode: "Markdown"})
-    }
+  `, { parse_mode: 'Markdown' })
+  }
 })
 
-bot.hears(/add ([а-я.]+) (.+)/, ({reply, match}) => {
-    const SUBJECT = new RegExp(match[1], 'gim')
-    const DATE = match[2]
-    const LENGTH_ARRAY_TEACHERS = 6
-    const arrayLength = db.get('info').value().length
+bot.hears(/add ([а-я.]+) (.+)/, ({ reply, match }) => {
+  const SUBJECT = new RegExp(match[1], 'gim')
+  const DATE = match[2]
+  const LENGTH_ARRAY_TEACHERS = 6
 
-    id += 1
-    for (i = 0; i < LENGTH_ARRAY_TEACHERS; i++) {
-        if (db.get(`teachers[${i}].subject`).value().match(SUBJECT)) {
-            subPUSH = db.get(`teachers[${i}].subject`).value()
-            for (j = 0; j < LENGTH_ARRAY_TEACHERS; j++) {
-                if (db.get(`teachers[${j}].subject`).value() == subPUSH) {
-                    TeacherPUSH = db.get(`teachers[${j}].teacher`).value()
-                }
-            }
+  id += 1
+  for (let i = 0; i < LENGTH_ARRAY_TEACHERS; i++) {
+    if (db.get(`teachers[${i}].subject`).value().match(SUBJECT)) {
+      subPUSH = db.get(`teachers[${i}].subject`).value()
+      for (let j = 0; j < LENGTH_ARRAY_TEACHERS; j++) {
+        if (db.get(`teachers[${j}].subject`).value() === subPUSH) {
+          TeacherPUSH = db.get(`teachers[${j}].teacher`).value()
         }
+      }
     }
+  }
 
+  db.get('info').push({
+    type: subPUSH,
+    teacher: TeacherPUSH,
+    date: DATE,
+    count: id
+  }).write()
+  reply('Спасибо, добавил лабу ✅')
+})
 
-    db.get('info').push({
-        type: subPUSH,
-        teacher: TeacherPUSH,
-        date: DATE,
-        count: id
-    }).write()
-    reply('Спасибо, добавил лабу ✅')
-  });
-  
-bot.hears(/remove (.+)/, ({reply, match}) => {
-    const arrayLength = db.get('info').value().length
-    const number = match[1];
-    db.get(`info`).remove({count: parseInt(number, 10)}).write()
-    if (arrayLength > 0 && number !== "all") {
-        reply(`Удалил лабу под номером ${number}🚫`);
-    } else if (number > 0) {
-        reply(`Лаб нету, нечего удалять`);
-    }
+bot.hears(/remove (.+)/, ({ reply, match }) => {
+  const arrayLength = db.get('info').value().length
+  const number = match[1]
+  db.get('info').remove({ count: parseInt(number, 10) }).write()
+  if (arrayLength > 0 && number !== 'all') {
+    reply(`Удалил лабу под номером ${number}🚫`)
+  } else if (number > 0) {
+    reply('Лаб нету, нечего удалять')
+  }
 
-    if (number == "all") {
-        db.get(`info`).remove().write()
-        reply('Стер все лабы')
-    }
-});
+  if (number === 'all') {
+    db.get('info').remove().write()
+    reply('Стер все лабы')
+  }
+})
 
 bot.hears('/add', (ctx) => ctx.reply('Ошибка! Где мне взять дату и название предмета?'))
 bot.hears('/remove', (ctx) => ctx.reply('Ошибка! Какой номер лабы из списка мне нужно удалить?'))
@@ -153,11 +151,11 @@ bot.command('sos', (ctx) => {
 2. [Гитхаб с контактами, информацией по баллам и конспектами](https://github.com/y0f0/ITMO)
 3. [Книжки и конспекты](https://drive.google.com/drive/folders/1JTte1XlZI47KAA0DD780_4w0haidU49e)
 
-_Какие-то данные могут быть неточными, напишите автору бота, чтобы он исправил_`,{parse_mode: "Markdown"});
-});
+_Какие-то данные могут быть неточными, напишите автору бота, чтобы он исправил_`, { parse_mode: 'Markdown' })
+})
 
 bot.command('help', (ctx) => {
-    ctx.reply(`
+  ctx.reply(`
 Автор бота - @sashafromlibertalia
 
 Как использовать *add* и *remove*?
@@ -169,24 +167,24 @@ _/add прога 21 сентября_
 _/remove 3_
 ----------------
 
-[Репозиторий](github.com/sashafromlibertalia/ITMO_DeadlineBot) `,{parse_mode: "Markdown"});
-});
+[Репозиторий](github.com/sashafromlibertalia/ITMO_DeadlineBot) `, { parse_mode: 'Markdown' })
+})
 
-bot.hears(/тоха (.+)/, ({reply}) => {
-  let answers = [
-    "Пахую ваще на все",
-    "Заебись, узнал номер своей группы",
-    "Настроение скверное, настроение пойти в сабвей",
-    "Нам всем пизда девочки",
-    "Ты заебал уже со своими вопросами",
-    "Ты заебала уже со своими вопросами",
-    "МНЕ ТАК КАЙФОВО ВЫ БЫ ЗНАЛИ РЕБЯТА!!!!",
-    "А где я? Это СПбГУ?",
-    "И тебе говна поесть желаю)",
-    "Курю траву и гоняю шары - карьера явно не на взлете",
-    "Это новый кадилак!!!!!"
+bot.hears(/тоха (.+)/, ({ reply }) => {
+  const answers = [
+    'Пахую ваще на все',
+    'Заебись, узнал номер своей группы',
+    'Настроение скверное, настроение пойти в сабвей',
+    'Нам всем пизда девочки',
+    'Ты заебал уже со своими вопросами',
+    'Ты заебала уже со своими вопросами',
+    'МНЕ ТАК КАЙФОВО ВЫ БЫ ЗНАЛИ РЕБЯТА!!!!',
+    'А где я? Это СПбГУ?',
+    'И тебе говна поесть желаю)',
+    'Курю траву и гоняю шары - карьера явно не на взлете',
+    'Это новый кадилак!!!!!'
   ]
   reply(`${answers[Math.floor(Math.random() * answers.length)]}`)
-});
+})
 
 bot.launch()
