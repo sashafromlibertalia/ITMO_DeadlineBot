@@ -4,7 +4,7 @@ const { Telegraf } = require('telegraf')
 const bot = new Telegraf(TOKEN)
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')
-const adapter = new FileSync('db.json')
+const adapter = new FileSync('/src/db.json')
 const db = low(adapter)
 let id = 0
 let TeacherPUSH = ''
@@ -12,8 +12,6 @@ let subPUSH = ''
 let numberMONTH = 0
 const group = 'M3106'
 const groupRU = 'М3106'
-
-const errors = require('./src/errors')
 
 bot.catch((err, ctx) => {
   console.log(`Прилетела ошибочка: ${ctx.updateType}`, err)
@@ -268,6 +266,8 @@ bot.hears(/тоха (.+)/, ({ reply }) => {
   reply(`${answers[Math.floor(Math.random() * answers.length)]}`)
 })
 
-errors.start()
+bot.hears('/add', (ctx) => ctx.reply('Ошибка! Где мне взять дату и название предмета?'))
+bot.hears('/remove', (ctx) => ctx.reply('Ошибка! Какой номер лабы из списка мне нужно удалить?'))
+bot.hears(/remove (.+)/, ({ reply }) => { reply('Нет пароля, поэтому не удалю') })
 
 bot.launch()
