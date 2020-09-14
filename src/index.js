@@ -13,6 +13,8 @@ let numberMONTH = 0
 const group = 'M3106'
 const groupRU = 'М3106'
 
+const errors = require('./src/errors')
+
 bot.catch((err, ctx) => {
   console.log(`Прилетела ошибочка: ${ctx.updateType}`, err)
 })
@@ -266,8 +268,6 @@ bot.hears(/тоха (.+)/, ({ reply }) => {
   reply(`${answers[Math.floor(Math.random() * answers.length)]}`)
 })
 
-bot.hears('/add', (ctx) => ctx.reply('Ошибка! Где мне взять дату и название предмета?'))
-bot.hears('/remove', (ctx) => ctx.reply('Ошибка! Какой номер лабы из списка мне нужно удалить?'))
-bot.hears(/remove (.+)/, ({ reply }) => { reply('Нет пароля, поэтому не удалю') })
+errors.start()
 
 bot.launch()
