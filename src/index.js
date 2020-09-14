@@ -9,7 +9,13 @@ const db = low(adapter)
 let id = 0
 let TeacherPUSH = ''
 let subPUSH = ''
+let numberMONTH = 0
 const group = 'M3106'
+const groupRU = 'М3106'
+
+bot.catch((err, ctx) => {
+  console.log(`Прилетела ошибочка: ${ctx.updateType}`, err)
+})
 
 db.defaults({ info: [] })
   .write()
@@ -30,9 +36,9 @@ bot.command('list', (ctx) => {
   for (let i = 0; i < arrayLength; i++) {
     db.get(`info[${i}]`).assign({ count: i + 1 }).write()
     text[i] = `
-${db.get('info').sortBy('count').value()[i].count}. *${db.get('info').sortBy('count').value()[i].type}*
-👨🏻‍🏫 _Учитель_ -  *${db.get('info').sortBy('count').value()[i].teacher}*
-🗓 _Дата сдачи_ - *${db.get('info').sortBy('count').value()[i].date}*`
+${db.get('info').sortBy('count').value()[i].count}. *${db.get('info').sortBy('count').sortBy('number').value()[i].type}*
+👨🏻‍🏫 _Учитель_ -  *${db.get('info').sortBy('count').sortBy('number').value()[i].teacher}*
+🗓 _Дата сдачи_ - *${db.get('info').sortBy('count').sortBy('number').value()[i].date}*`
   }
   if (arrayLength === 0) {
     ctx.reply('🎰 *Дедлайнов нет!* 🎰', { parse_mode: 'Markdown' })
@@ -46,10 +52,76 @@ _Если ты знаешь еще какие-то дедлайны, то доб
   }
 })
 
-bot.hears(/add ([а-я.]+) (.+)/, ({ reply, match }) => {
+bot.hears(/add ([а-я.]+) (.+) (.+)/, ({ reply, match, err }) => {
   const SUBJECT = new RegExp(match[1], 'gim')
   const DATE = match[2]
+  const PASSWORD = match[3]
   const LENGTH_ARRAY_TEACHERS = 6
+  const monthNumber = [
+    {
+      month: ' января',
+      number: '01'
+    },
+    {
+      month: ' февраля',
+      number: '02'
+    },
+    {
+      month: ' марта',
+      number: '03'
+    },
+    {
+      month: ' апреля',
+      number: '04'
+    },
+    {
+      month: ' мая',
+      number: '05'
+    },
+    {
+      month: ' июня',
+      number: '06'
+    },
+    {
+      month: ' июля',
+      number: '07'
+    },
+    {
+      month: ' августа',
+      number: '08'
+    },
+    {
+      month: ' сентября',
+      number: '09'
+    },
+    {
+      month: ' октября',
+      number: '10'
+    },
+    {
+      month: ' ноябрь',
+      number: '11'
+    },
+    {
+      month: ' декабря',
+      number: '12'
+    }]
+
+  const MONTH_DAY = DATE.match(/\d+/)[0]
+  const MONTH_NAME = new RegExp(DATE.match(/\D+/)[0], 'gim')
+  if (err) {
+    throw new Error('Ты ввел(а) сообщение в неверном формате')
+  }
+
+  if (PASSWORD === undefined || PASSWORD === null) {
+    reply('Нет пароля')
+  }
+
+  for (let i = 0; i < monthNumber.length; i++) {
+    if (monthNumber[i].month.match(MONTH_NAME)) {
+      numberMONTH = parseInt(`${MONTH_DAY}${monthNumber[i].number}`, 10)
+    }
+  }
 
   id += 1
   for (let i = 0; i < LENGTH_ARRAY_TEACHERS; i++) {
@@ -62,41 +134,45 @@ bot.hears(/add ([а-я.]+) (.+)/, ({ reply, match }) => {
       }
     }
   }
-  if (subPUSH !== '') {
-    db.get('info').push({
-      type: subPUSH,
-      teacher: TeacherPUSH,
-      date: DATE,
-      count: id
-    }).write()
-    reply('Спасибо, добавил лабу ✅')
-  } else {
-    reply('Увы, но я не настолько умный, чтобы понимать твои модные слова. Буду рад, если напишешь предмет академическим языком, хотя бы частично')
-  }
+
+  if (group.match(new RegExp(PASSWORD, 'gim')) || groupRU.match(new RegExp(PASSWORD, 'gim'))) {
+    if (subPUSH !== '') {
+      db.get('info').push({
+        type: subPUSH,
+        teacher: TeacherPUSH,
+        date: DATE,
+        count: id,
+        number: numberMONTH
+      }).write()
+      reply('Спасибо, добавил лабу ✅')
+    } else {
+      reply('Увы, но я не настолько умный, чтобы понимать твои модные слова. Буду рад, если напишешь предмет академическим языком, хотя бы частично')
+    }
+  } else { reply('Пароль лажа, пробуй еще') }
 })
 
-bot.hears(/remove (.+)/, ({ reply, match }) => {
+bot.hears(/remove (.+) (.+)/, ({ reply, match }) => {
   const arrayLength = db.get('info').value().length
   const number = match[1]
+  const PASSWORD = match[2]
+
   db.get('info').remove({ count: parseInt(number, 10) }).write()
-  if (arrayLength > 0 && number !== 'all') {
-    reply(`Удалил лабу под номером ${number}🚫`)
-  } else if (number > 0) {
-    reply('Лаб нету, нечего удалять')
-  }
-
-  if (number === 'all') {
-    db.get('info').remove().write()
-    reply('Стер все лабы')
-  }
+  if (group.match(new RegExp(PASSWORD, 'gim')) || groupRU.match(new RegExp(PASSWORD, 'gim'))) {
+    if (arrayLength > 0 && number !== 'all') {
+      reply(`Удалил лабу под номером ${number}🚫`)
+    } else if (number > 0) {
+      reply('Лаб нету, нечего удалять')
+    }
+    if (number === 'all') {
+      db.get('info').remove().write()
+      reply('Стер все лабы')
+    }
+  } else { reply('Пароль лажа, пробуй еще') }
 })
-
-bot.hears('/add', (ctx) => ctx.reply('Ошибка! Где мне взять дату и название предмета?'))
-bot.hears('/remove', (ctx) => ctx.reply('Ошибка! Какой номер лабы из списка мне нужно удалить?'))
 
 bot.command('sos', (ctx) => {
   ctx.reply(
-`❗*Информация о преподах и их системах*❗
+`❗*Информация о преподах и их системах, актуально для ${group}*❗
 
 1. *Программирование*
 · Препод - _Повышев Владислав Вячеславович_
@@ -189,5 +265,9 @@ bot.hears(/тоха (.+)/, ({ reply }) => {
   ]
   reply(`${answers[Math.floor(Math.random() * answers.length)]}`)
 })
+
+bot.hears('/add', (ctx) => ctx.reply('Ошибка! Где мне взять дату и название предмета?'))
+bot.hears('/remove', (ctx) => ctx.reply('Ошибка! Какой номер лабы из списка мне нужно удалить?'))
+bot.hears(/remove (.+)/, ({ reply }) => { reply('Нет пароля, поэтому не удалю') })
 
 bot.launch()
